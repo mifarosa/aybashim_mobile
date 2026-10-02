@@ -11,13 +11,14 @@ export const MAX_FILE_BYTES = 20 * 1024 * 1024;
 let pdfjsPromise = null;
 
 function loadPdfjs() {
-  pdfjsPromise ??= Promise.all([
-    import('pdfjs-dist/legacy/build/pdf.mjs'),
-    import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url')
-  ]).then(([pdfjs, worker]) => {
-    pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
-    return pdfjs;
-  }).catch((error) => {
+  pdfjsPromise ??= import('./polyfills.js')
+    .then(() => import('pdfjs-dist/legacy/build/pdf.mjs'))
+    .then((pdfjs) => {
+      // A single worker is shared by all documents; it is started from our own entry so
+      // that the polyfills run inside the worker too.
+      pdfjs.GlobalWorkerOptions.workerPort ??= new Worker(new URL('./pdfWorker.js', import.meta.url), { type: 'module' });
+      return pdfjs;
+    }).catch((error) => {
     pdfjsPromise = null;
     throw error;
   });
