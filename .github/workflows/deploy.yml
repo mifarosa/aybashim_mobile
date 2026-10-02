@@ -1,7 +1,9 @@
 name: Deploy to GitHub Pages
 
-# Manual for now: enable "Settings → Pages → Source: GitHub Actions" first.
+# Requires "Settings → Pages → Source: GitHub Actions" and "main" as the default branch.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

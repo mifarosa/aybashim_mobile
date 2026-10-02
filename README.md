@@ -71,8 +71,9 @@ barındırmada çalışır. Alt dizinden sunulacaksa `VITE_BASE` verilmelidir:
 VITE_BASE=/aybashim_mobile/ npm run build
 ```
 
-GitHub Pages için `.github/workflows/deploy.yml` hazırdır. Repo ayarlarında **Settings → Pages → Source:
-GitHub Actions** seçildikten sonra Actions sekmesinden "Deploy to GitHub Pages" iş akışı elle çalıştırılabilir.
+GitHub Pages için `.github/workflows/deploy.yml` hazırdır ve `main`'e her push'ta çalışır. Bir kereye mahsus
+repo ayarlarında **Settings → Pages → Source: GitHub Actions** seçilmeli ve varsayılan dal `main` olmalıdır.
+Uygulama `https://mifarosa.github.io/aybashim_mobile/` adresinde yayınlanır.
 
 ## Veri ve gizlilik
 
