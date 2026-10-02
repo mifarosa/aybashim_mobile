@@ -68,11 +68,24 @@ async function refreshData() {
   state.imports = imports;
 }
 
+const INIT_TIMEOUT_MS = 10000;
+
+function withTimeout(promise, ms, message) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 export async function init() {
   try {
-    state.settings = await loadSettings(db);
-    state.amountsHidden = state.settings.hideAmounts;
-    await refreshData();
+    // Some in-app browsers never answer IndexedDB requests; fail visibly instead of hanging.
+    await withTimeout((async () => {
+      state.settings = await loadSettings(db);
+      state.amountsHidden = state.settings.hideAmounts;
+      await refreshData();
+    })(), INIT_TIMEOUT_MS, 'Yerel veritabanı zamanında yanıt vermedi.');
   } catch (error) {
     state.loadError = error?.message || String(error);
   } finally {

@@ -14,9 +14,125 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>aybashim</title>
+    <style>
+      /* Inline so that startup messages are readable even if the CSS bundle fails to load. */
+      .boot-message {
+        margin: 0;
+        padding: 40vh 24px 0;
+        color: #5d6d67;
+        font: 600 15px/1.5 system-ui, -apple-system, sans-serif;
+        text-align: center;
+      }
+
+      .boot-error {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        overflow: auto;
+        padding: max(24px, env(safe-area-inset-top)) 20px 24px;
+        background: #f6faf8;
+        color: #14231f;
+        font: 15px/1.5 system-ui, -apple-system, sans-serif;
+      }
+
+      .boot-error strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #b42318;
+        font-size: 19px;
+      }
+
+      .boot-error pre {
+        padding: 12px;
+        border-radius: 10px;
+        background: #ffffff;
+        border: 1px solid #d7e5df;
+        font-size: 12px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        user-select: text;
+        -webkit-user-select: text;
+      }
+
+      .boot-error button {
+        min-height: 44px;
+        padding: 0 18px;
+        border: 0;
+        border-radius: 10px;
+        background: #12816f;
+        color: #ffffff;
+        font: inherit;
+        font-weight: 700;
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <p class="boot-message">aybashim yükleniyor…</p>
+    </div>
+    <noscript>
+      <p class="boot-message">aybashim için JavaScript'in açık olması gerekiyor.</p>
+    </noscript>
+    <script>
+      // Shows startup failures on screen instead of a blank page. The app sets
+      // window.__aybashimMounted once Vue has rendered; after that this stays silent.
+      (function () {
+        var problems = [];
+        var TIMEOUT_MS = 12000;
+
+        function render(reason) {
+          if (window.__aybashimMounted) return;
+          var box = document.getElementById('boot-error');
+          if (!box) {
+            box = document.createElement('div');
+            box.id = 'boot-error';
+            box.className = 'boot-error';
+            document.body.appendChild(box);
+          }
+          box.innerHTML = '';
+          var title = document.createElement('strong');
+          title.textContent = 'Uygulama açılamadı';
+          var hint = document.createElement('p');
+          hint.textContent = reason + ' Linki bir uygulamanın (WhatsApp, Instagram, Gmail…) içinden açtıysan Safari veya Chrome ile açmayı dene. Sorun sürerse aşağıdaki bilgiyi gönder.';
+          var details = document.createElement('pre');
+          details.textContent = problems.concat(['Tarayıcı: ' + navigator.userAgent]).join('\n');
+          var retry = document.createElement('button');
+          retry.type = 'button';
+          retry.textContent = 'Yeniden dene';
+          retry.onclick = function () { location.reload(); };
+          box.appendChild(title);
+          box.appendChild(hint);
+          box.appendChild(details);
+          box.appendChild(retry);
+        }
+
+        window.addEventListener('error', function (event) {
+          var target = event.target;
+          if (target && target !== window && (target.src || target.href)) {
+            problems.push('Dosya yüklenemedi: ' + (target.src || target.href));
+          } else {
+            problems.push('Hata: ' + (event.message || event.error));
+          }
+          render('Başlangıçta bir hata oluştu.');
+        }, true);
+
+        window.addEventListener('unhandledrejection', function (event) {
+          var reason = event.reason;
+          problems.push('Hata: ' + ((reason && (reason.stack || reason.message)) || reason));
+          render('Başlangıçta bir hata oluştu.');
+        });
+
+        setTimeout(function () {
+          problems.push('Uygulama ' + TIMEOUT_MS / 1000 + ' saniye içinde başlamadı.');
+          render('Uygulama zamanında başlamadı.');
+        }, TIMEOUT_MS);
+      })();
+    </script>
+    <script nomodule>
+      document.querySelector('.boot-message').textContent =
+        'Bu tarayıcı çok eski. aybashim için güncel bir Safari veya Chrome gerekiyor.';
+      window.__aybashimMounted = true;
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

@@ -8,9 +8,11 @@
       <AppIcon name="alert" :size="32" />
       <h1>Veriler açılamadı</h1>
       <p>
-        Tarayıcı yerel veritabanına erişime izin vermedi. Gizli sekmede olabilirsin ya da site verisi engellenmiş olabilir.
+        Tarayıcı yerel veritabanına erişime izin vermedi. Gizli sekmede olabilirsin, site verisi engellenmiş olabilir ya da
+        link bir uygulamanın (WhatsApp, Instagram, Gmail…) içinden açılmış olabilir. Safari veya Chrome ile açmayı dene.
       </p>
-      <code>{{ state.loadError }}</code>
+      <code>{{ state.loadError }}<br />{{ userAgent }}</code>
+      <button type="button" class="primary" @click="reload">Yeniden dene</button>
     </div>
 
     <OnboardingView v-else-if="!state.settings.onboarded" />
@@ -78,6 +80,12 @@ const TABS = [
 ];
 
 const currentTab = computed(() => TABS.find((tab) => tab.id === state.tab) || TABS[0]);
+
+const userAgent = navigator.userAgent;
+
+function reload() {
+  window.location.reload();
+}
 
 // The active tab is mirrored to the URL hash so the Android back button moves between tabs.
 function tabFromHash() {
