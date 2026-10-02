@@ -73,7 +73,8 @@ VITE_BASE=/aybashim_mobile/ npm run build
 
 GitHub Pages için `.github/workflows/deploy.yml` hazırdır ve `main`'e her push'ta çalışır. Bir kereye mahsus
 repo ayarlarında **Settings → Pages → Source: GitHub Actions** seçilmeli ve varsayılan dal `main` olmalıdır.
-Uygulama `https://mifarosa.github.io/aybashim_mobile/` adresinde yayınlanır.
+Adres öneki Pages ayarlarından otomatik alınır: özel alan adıyla kökten (`https://aybashim.mifarosa.com/`),
+özel alan adı yoksa `/<repo>/` altından yayınlanır.
 
 ## Veri ve gizlilik
 
