@@ -3,7 +3,7 @@
 import { computed, reactive, shallowRef } from 'vue';
 import { EMPTY_FILTERS, isSelfTransfer } from './core/analytics.js';
 import { categorize } from './core/classifier.js';
-import { readStatement } from './core/statementReader.js';
+import { loadStatement, parseLoadedStatement } from './core/statementReader.js';
 import { countOtherBankMatches } from './core/transactions.js';
 import { backupFileName, createBackup, parseBackup, restoreBackup } from './data/backup.js';
 import { createDatabase } from './data/db.js';
@@ -111,22 +111,24 @@ export function openTransactions(segment = 'all', filters = {}) {
   state.tab = 'transactions';
 }
 
+export { loadStatement };
+
 /**
- * Parses and stores a statement.
- * @returns {Promise<{result: object, text: string|null}>}
+ * Parses a statement loaded with loadStatement using the chosen bank and stores it.
+ * @returns {Promise<object>} import result with saved, duplicate and invalid counts
  */
-export async function importStatement(file, bankCode) {
-  const parsed = await readStatement(file, bankCode);
+export async function importStatement(loaded, bankCode) {
+  const parsed = parseLoadedStatement(loaded, bankCode);
   const otherBankMatches = countOtherBankMatches(parsed.transactions, rawTransactions.value);
   const result = await saveImport(db, {
     bankCode,
-    fileName: file.name,
+    fileName: loaded.fileName,
     transactions: parsed.transactions,
     parsedCount: parsed.parsedCount,
     invalidCount: parsed.invalidCount
   });
   await refreshData();
-  return { result: { ...result, otherBankMatches }, text: parsed.text };
+  return { ...result, otherBankMatches };
 }
 
 export async function removeImport(importId) {

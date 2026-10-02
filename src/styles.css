@@ -1094,6 +1094,47 @@ label {
   font-weight: 500;
 }
 
+.file-drop.loaded {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--line));
+}
+
+.spinner.large {
+  width: 28px;
+  height: 28px;
+  border-width: 3px;
+  color: var(--primary);
+}
+
+.detect-note {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.detect-note p {
+  margin: 0;
+}
+
+.detect-note.found {
+  background: var(--pastel-green);
+  color: var(--ink);
+}
+
+.detect-note.found .app-icon {
+  color: var(--credit);
+}
+
+.detect-note.unsure {
+  background: var(--warn-soft);
+  color: var(--warn-ink);
+}
+
 .file-name {
   max-width: 100%;
   overflow-wrap: anywhere;

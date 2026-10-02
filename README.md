@@ -7,12 +7,13 @@ Hesap, sunucu ya da backend yoktur; tüm veriler cihazın tarayıcısında (Inde
 ## Özellikler
 
 - ING hesap (PDF), ING kredi kartı (PDF), A101 Hadi (PDF) ve Garanti BBVA (XLS) ekstrelerini cihazda okuma
+- Bankayı otomatik algılama (ekstredeki banka işaretleri, yoksa satır biçimi); algılanan banka değiştirilebilir
 - Web sürümündeki keyword kurallarıyla birebir aynı otomatik kategorilendirme
 - Ad soyada göre kendi hesapların arasındaki transferleri ayırma ("Kendime" sekmesi)
 - Aylık özet: net denge, gelir/gider, gider dağılımı (halka grafik), son 6 ayın nakit akışı
 - İşlem listesi: arama, banka/tip/kategori/tarih filtreleri, sıralama, gider/gelir kaynakları görünümü
 - Mükerrer kayıt koruması (aynı ekstreyi tekrar yüklemek kayıt eklemez; aynı gün aynı tutarlı iki gerçek işlem korunur)
-- Yanlış banka seçimi uyarısı ve yükleme geçmişinden tek dokunuşla geri alma
+- Elle yanlış banka seçilirse uyarı ve yükleme geçmişinden tek dokunuşla geri alma
 - Tutarları gizleme (dokununca birkaç saniye görünür)
 - JSON yedek alma / geri yükleme (birleştir veya değiştir), yedek hatırlatması
 - Çevrimdışı çalışma: uygulama ve ekstre okuma internet olmadan da çalışır
@@ -86,8 +87,7 @@ Adres öneki Pages ayarlarından otomatik alınır: özel alan adıyla kökten (
 
 ## Bilinen sınırlar
 
-- Ayrıştırıcılar backend'deki regex'lerin birebir portudur ve PDFBox çıktısına göre yazılmıştır. pdf.js metni
-  biraz farklı satırlara bölebilir; testler üretilmiş örnek PDF'lerle geçer ama gerçek ekstrelerle doğrulanmalıdır.
-  Bir ekstrede işlem bulunamazsa **Yükle** ekranındaki "Çıkarılan metni göster" ile ham metin görülebilir.
-- Banka kendini ekstreden doğrulamaz; yanlış banka seçilirse benzer formatlar yanlış banka adıyla okunabilir.
-  Bu durumda uygulama uyarı verir ve yükleme geri alınabilir.
+- ING hesap, ING kredi kartı ve Garanti ayrıştırıcıları gerçek ekstrelerle doğrulandı (bakiye zinciri ve toplam
+  borç kuruşu kuruşuna tutuyor). A101 Hadi henüz gerçek bir ekstreyle denenmedi; algılaması ING işareti
+  taşımayan kart biçimli PDF'lere dayanır.
+- Bir ekstrede işlem bulunamazsa **Yükle** ekranındaki "Çıkarılan metni göster" ile ham metin görülebilir.

@@ -12,10 +12,7 @@ export const BANKS = [
   { code: 'GARANTI', label: 'Garanti BBVA', detail: 'Hesap ekstresi · XLS', mark: 'GB', format: 'xls' }
 ];
 
-export const FILE_ACCEPT = {
-  pdf: 'application/pdf,.pdf',
-  xls: 'application/vnd.ms-excel,.xls'
-};
+export const FILE_ACCEPT = 'application/pdf,.pdf,application/vnd.ms-excel,.xls';
 
 const TEXT_PARSERS = {
   ING_ACCOUNT: parseIngAccount,
