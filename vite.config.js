@@ -11,6 +11,10 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version)
   },
+  worker: {
+    // The pdf.js worker is an ES module; keep it as a module worker.
+    format: 'es'
+  },
   build: {
     target: ['es2020', 'safari15'],
     // pdf.js and SheetJS are large but lazy-loaded only when a statement is imported.
