@@ -1,0 +1,9 @@
+node_modules/
+dist/
+dev-dist/
+# Copied from node_modules by scripts/copy-pdfjs-assets.mjs
+public/pdfjs/
+.DS_Store
+*.log
+.vscode/
+.idea/
