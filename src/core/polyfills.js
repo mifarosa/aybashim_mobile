@@ -43,6 +43,31 @@ if (typeof AbortSignal !== 'undefined' && typeof AbortController !== 'undefined'
   });
 }
 
+// Safari (still in 26.x) cannot iterate a ReadableStream with `for await`; pdf.js does this
+// in getTextContent, which made every PDF fail on iPhones.
+if (typeof ReadableStream !== 'undefined' && typeof ReadableStream.prototype[Symbol.asyncIterator] !== 'function') {
+  const values = async function* values({ preventCancel = false } = {}) {
+    const reader = this.getReader();
+    let finished = false;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          finished = true;
+          return;
+        }
+        yield value;
+      }
+    } finally {
+      // Leaving the loop early (break / throw) cancels the stream, as the native iterator does.
+      if (!finished && !preventCancel) await reader.cancel().catch(() => {});
+      reader.releaseLock();
+    }
+  };
+  define(ReadableStream.prototype, 'values', values);
+  Object.defineProperty(ReadableStream.prototype, Symbol.asyncIterator, { configurable: true, writable: true, value: values });
+}
+
 // iOS Safari < 15.4, Chrome < 93
 define(Object, 'hasOwn', function hasOwn(object, key) {
   return Object.prototype.hasOwnProperty.call(Object(object), key);
