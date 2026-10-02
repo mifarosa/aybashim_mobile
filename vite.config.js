@@ -9,7 +9,9 @@ export default defineConfig({
   // Set VITE_BASE (e.g. "/aybashim_mobile/") when the app is served from a sub path such as GitHub Pages.
   base: process.env.VITE_BASE || '/',
   define: {
-    __APP_VERSION__: JSON.stringify(pkg.version)
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    // Short commit hash in CI, so a report shows exactly which build a device runs.
+    __APP_BUILD__: JSON.stringify(process.env.GITHUB_SHA?.slice(0, 7) || 'dev')
   },
   worker: {
     // The pdf.js worker is an ES module; keep it as a module worker.
@@ -23,7 +25,9 @@ export default defineConfig({
   plugins: [
     vue(),
     VitePWA({
-      registerType: 'prompt',
+      // New versions activate on the next load without waiting for a tap, so phones do not
+      // keep running an outdated cached build.
+      registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         id: './',

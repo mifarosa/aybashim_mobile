@@ -1,4 +1,8 @@
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+
+const polyfillSource = readFileSync(new URL('../src/core/polyfills.js', import.meta.url), 'utf8');
 
 const original = Promise.withResolvers;
 
@@ -19,6 +23,52 @@ describe('polyfills', () => {
     const rejected = Promise.withResolvers();
     rejected.reject(new Error('boom'));
     await expect(rejected.promise).rejects.toThrow('boom');
+  });
+
+  it('adds the other built-ins pdf.js needs on older phones', async () => {
+    // Array/Object/String built-ins are removed in a separate realm so the test runner keeps working.
+    const realm = vm.createContext({});
+    vm.runInContext(`
+      delete Object.hasOwn;
+      delete Array.prototype.at;
+      delete String.prototype.at;
+      delete Object.getPrototypeOf(Int8Array.prototype).at;
+      delete Array.prototype.findLast;
+      delete Array.prototype.findLastIndex;
+    `, realm);
+    vm.runInContext(polyfillSource, realm);
+    const results = vm.runInContext(`({
+      hasOwn: [Object.hasOwn({ a: 1 }, 'a'), Object.hasOwn({}, 'toString')],
+      at: [[1, 2, 3].at(-1), [1, 2, 3].at(5), 'abc'.at(-2), new Uint8Array([7, 8]).at(-1)],
+      findLast: [[1, 2, 3, 4].findLast((n) => n % 2 === 1), [1, 2, 3, 4].findLastIndex((n) => n > 10)]
+    })`, realm);
+    expect(JSON.parse(JSON.stringify(results))).toEqual({
+      hasOwn: [true, false],
+      at: [3, null, 'b', 8],
+      findLast: [3, -1]
+    });
+
+    // Response and AbortSignal are not used by the test runner, so they are patched in place.
+    const savedBytes = Response.prototype.bytes;
+    const savedAny = AbortSignal.any;
+    delete Response.prototype.bytes;
+    delete AbortSignal.any;
+    try {
+      vi.resetModules();
+      await import('../src/core/polyfills.js');
+      expect(Array.from(await new Response(new Uint8Array([1, 2, 3])).bytes())).toEqual([1, 2, 3]);
+
+      const first = new AbortController();
+      const second = new AbortController();
+      const combined = AbortSignal.any([first.signal, second.signal]);
+      expect(combined.aborted).toBe(false);
+      second.abort('stop');
+      expect(combined.aborted).toBe(true);
+      expect(combined.reason).toBe('stop');
+    } finally {
+      Response.prototype.bytes = savedBytes;
+      AbortSignal.any = savedAny;
+    }
   });
 
   it('keeps the native implementation when it exists', async () => {
