@@ -71,6 +71,43 @@ describe('polyfills', () => {
     }
   });
 
+  it('makes ReadableStream async iterable like on Safari, where it is missing', async () => {
+    const proto = ReadableStream.prototype;
+    const savedIterator = proto[Symbol.asyncIterator];
+    const savedValues = proto.values;
+    delete proto[Symbol.asyncIterator];
+    delete proto.values;
+    const streamOf = (items, onCancel = () => {}) => new ReadableStream({
+      start(controller) {
+        items.forEach((item) => controller.enqueue(item));
+        controller.close();
+      },
+      cancel: onCancel
+    });
+    try {
+      vi.resetModules();
+      await import('../src/core/polyfills.js');
+
+      const seen = [];
+      for await (const chunk of streamOf(['a', 'b', 'c'])) seen.push(chunk);
+      expect(seen).toEqual(['a', 'b', 'c']);
+
+      // Breaking out early cancels the stream and releases the reader.
+      let cancelled = false;
+      const stream = streamOf([1, 2, 3], () => {
+        cancelled = true;
+      });
+      for await (const chunk of stream) {
+        if (chunk === 1) break;
+      }
+      expect(cancelled).toBe(true);
+      expect(stream.locked).toBe(false);
+    } finally {
+      Object.defineProperty(proto, Symbol.asyncIterator, { configurable: true, writable: true, value: savedIterator });
+      Object.defineProperty(proto, 'values', { configurable: true, writable: true, value: savedValues });
+    }
+  });
+
   it('keeps the native implementation when it exists', async () => {
     vi.resetModules();
     await import('../src/core/polyfills.js');
