@@ -11,7 +11,7 @@ import { BANKS, parseGarantiRows, parseStatementText, prepareImport } from './pa
 const ING_MARKERS = ['ing bank', 'ing.com.tr', 'ing mobil'];
 const ING_CREDIT_MARKERS = ['toplam borcunuz', 'asgari odeme', 'donem ici islemleri', 'kredi karti ekstre'];
 const ING_ACCOUNT_MARKERS = ['hesap ekstresi', 'tarih aciklama tutar bakiye'];
-const HADI_MARKERS = ['hadi kart', 'a101 hadi', 'hadi ekstre'];
+const HADI_MARKERS = ['haditombank', 'hadi kart', 'a101 hadi', 'hadi ekstre'];
 const GARANTI_MARKERS = ['garanti bankasi', 'garanti bbva'];
 
 const containsAny = (text, markers) => markers.some((marker) => text.includes(marker));

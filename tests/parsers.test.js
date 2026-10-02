@@ -49,6 +49,29 @@ describe('ING account parser', () => {
     expect(transactions[1].bankName).toBe('ING');
   });
 
+  it('takes the amount and balance at the end of the block, not numbers inside the description', () => {
+    const text = [
+      '26.09.2026 Giden FAST SN:26325115594 Ali Veli 30 Eylül 2026 19:00-20:00 Hal -1,400.00 28,612.39',
+      '22.09.2026 İGDAŞ 1234567890 22/09/26 FATNO:9876543 AD SOYAD -348.00 31,187.39',
+      '21.09.2026 Enerjisa 21.09.2026 Sözleşme No:42 -305.00 32,106.39',
+      '20.09.2026 EMEKLİLİK (G)D6120595 - 2,200.91 54,346.91',
+      '19.09.2026 KART ODEMESI',
+      '5324********6323 -33010541 -1,000.00 38,260.24',
+      'SAYFA 2 / 3'
+    ].join('\n');
+
+    const transactions = parseIngAccount(text);
+
+    expect(transactions.map(({ description, amount, type, balance }) => ({ description, amount, type, balance }))).toEqual([
+      { description: 'Giden FAST SN:26325115594 Ali Veli 30 Eylül 2026 19:00-20:00 Hal', amount: 1400, type: 'DEBIT', balance: 28612.39 },
+      { description: 'İGDAŞ 1234567890 22/09/26 FATNO:9876543 AD SOYAD', amount: 348, type: 'DEBIT', balance: 31187.39 },
+      { description: 'Enerjisa 21.09.2026 Sözleşme No:42', amount: 305, type: 'DEBIT', balance: 32106.39 },
+      // "- " followed by a space is a separator in the description, not a sign.
+      { description: 'EMEKLİLİK (G)D6120595 -', amount: 2200.91, type: 'CREDIT', balance: 54346.91 },
+      { description: 'KART ODEMESI 5324********6323 -33010541 SAYFA 2 / 3', amount: 1000, type: 'DEBIT', balance: 38260.24 }
+    ]);
+  });
+
   it('handles thousands separators and Windows line endings', () => {
     const transactions = parseIngAccount('03.05.2026 KIRA ODEMESI -12,500.00 3,250.75\r\n');
     expect(transactions[0].amount).toBe(12500);
@@ -68,6 +91,14 @@ describe('ING credit card parser', () => {
     expect(transactions[0].amount).toBe(123.45);
     expect(transactions[0].type).toBe('DEBIT');
     expect(transactions[1].type).toBe('CREDIT');
+  });
+
+  it('skips bonus-only lines without a TL amount and strips negative points', () => {
+    const raw = parseIngCredit('03/08/2026 HEPSIPAY-HEP/HEPSIBURADA ISTANBUL -16.52 0.00\n04/08/2026 MIGROS -1.20 45.00');
+    expect(raw[1].description).toBe('MIGROS');
+    const result = prepareImport(raw);
+    expect(result.transactions.map((t) => t.description)).toEqual(['MIGROS']);
+    expect(result).toMatchObject({ parsedCount: 1, invalidCount: 0 });
   });
 
   it('drops a trailing number column from the description', () => {

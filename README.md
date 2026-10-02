@@ -8,10 +8,11 @@ Hesap, sunucu ya da backend yoktur; tüm veriler cihazın tarayıcısında (Inde
 
 - ING hesap (PDF), ING kredi kartı (PDF), A101 Hadi (PDF) ve Garanti BBVA (XLS) ekstrelerini cihazda okuma
 - Bankayı otomatik algılama (ekstredeki banka işaretleri, yoksa satır biçimi); algılanan banka değiştirilebilir
-- Web sürümündeki keyword kurallarıyla birebir aynı otomatik kategorilendirme
+- Anahtar kelime kurallarıyla otomatik kategorilendirme (web sürümünün kuralları, gerçek ekstrelerle iyileştirildi: kısa kelimeler tam kelime olarak eşleşir, transfer notları ve işveren ödemeleri tanınır)
+- İadeler (iade edilen sipariş, kullanılan hediye bakiyesi, geri ödenen pay) ilgili kategorinin giderinden düşülür
 - Ad soyada göre kendi hesapların arasındaki transferleri ayırma ("Kendime" sekmesi)
 - Aylık özet: net denge, gelir/gider, gider dağılımı (halka grafik), son 6 ayın nakit akışı
-- İşlem listesi: arama, banka/tip/kategori/tarih filtreleri, sıralama, gider/gelir kaynakları görünümü
+- İşlem listesi: arama, hızlı dönem seçimi (bu ay, geçen ay, son 3 ay, bu yıl), banka/tip/kategori/tarih/tutar filtreleri, sıralama, gider/gelir kaynakları görünümü
 - Mükerrer kayıt koruması (aynı ekstreyi tekrar yüklemek kayıt eklemez; aynı gün aynı tutarlı iki gerçek işlem korunur)
 - Elle yanlış banka seçilirse uyarı ve yükleme geçmişinden tek dokunuşla geri alma
 - Tutarları gizleme (dokununca birkaç saniye görünür)
@@ -87,7 +88,9 @@ Adres öneki Pages ayarlarından otomatik alınır: özel alan adıyla kökten (
 
 ## Bilinen sınırlar
 
-- ING hesap, ING kredi kartı ve Garanti ayrıştırıcıları gerçek ekstrelerle doğrulandı (bakiye zinciri ve toplam
-  borç kuruşu kuruşuna tutuyor). A101 Hadi henüz gerçek bir ekstreyle denenmedi; algılaması ING işareti
-  taşımayan kart biçimli PDF'lere dayanır.
+- Dört ayrıştırıcı da gerçek ekstrelerle doğrulandı: ING hesap ve Garanti'de bakiye zinciri, ING kredi kartı ve
+  A101 Hadi'de ekstre borcu kuruşu kuruşuna tutuyor.
+- ING hesap ayrıştırıcısı 0.3.0'dan önce açıklamasında sayı geçen satırlarda yanlış tutar okuyabiliyordu
+  (backend'deki hatanın aynısı). Daha önce yüklenmiş ING hesap ekstreleri **Yükle → Yüklenen ekstreler**
+  bölümünden silinip yeniden yüklenmelidir.
 - Bir ekstrede işlem bulunamazsa **Yükle** ekranındaki "Çıkarılan metni göster" ile ham metin görülebilir.

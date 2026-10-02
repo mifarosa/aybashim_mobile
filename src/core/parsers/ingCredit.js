@@ -5,7 +5,8 @@ import { parseDayMonthYear } from '../dates.js';
 import { parseDotDecimal } from '../money.js';
 
 const LINE_PATTERN = /^(\d{2}\/\d{2}\/\d{4})\s+(.+?)\s+([\d,.]+)\s*(\+)?$/;
-const TRAILING_NUMBER = /\s+\d+\.\d+$/;
+// Bonus points column (may be negative when points are spent).
+const TRAILING_NUMBER = /\s+-?\d+\.\d+$/;
 
 export function parseIngCredit(text, fileName = '') {
   const transactions = [];
