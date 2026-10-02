@@ -19,10 +19,15 @@ const UPDATE_CHECK_MS = 60 * 60 * 1000;
 const { needRefresh, offlineReady, updateServiceWorker } = useRegisterSW({
   onRegisteredSW(swUrl, registration) {
     if (!registration) return;
-    // Installed PWAs can stay open for days; check for new versions periodically.
-    setInterval(() => {
+    // Installed PWAs can stay open for days; check for new versions periodically and
+    // whenever the app comes back to the foreground.
+    const check = () => {
       if (navigator.onLine) registration.update().catch(() => {});
-    }, UPDATE_CHECK_MS);
+    };
+    setInterval(check, UPDATE_CHECK_MS);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') check();
+    });
   }
 });
 

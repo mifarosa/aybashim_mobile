@@ -113,6 +113,7 @@
 <script setup>
 import { computed, onActivated, reactive, ref, watch } from 'vue';
 import AppIcon from '../components/AppIcon.vue';
+import { APP_BUILD, APP_VERSION } from '../diagnostics.js';
 import {
   downloadBackup,
   notify,
@@ -126,7 +127,7 @@ import {
   wipeAllData
 } from '../store.js';
 
-const version = __APP_VERSION__;
+const version = `${APP_VERSION} (${APP_BUILD})`;
 
 const fullName = ref(state.settings.fullName);
 const busy = ref(false);

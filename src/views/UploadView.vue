@@ -59,6 +59,21 @@
       </template>
     </section>
 
+    <section v-if="readError" class="card result-card warn" role="alert">
+      <header class="card-header">
+        <div>
+          <p class="file-label">{{ readError.fileName }}</p>
+          <h2>Dosya okunamadı</h2>
+        </div>
+      </header>
+      <p class="hint">{{ readError.message }}</p>
+      <p class="hint">Sorun sürerse aşağıdaki teknik bilgiyi kopyalayıp gönder; kişisel veri içermez.</p>
+      <textarea readonly rows="7" :value="readError.details"></textarea>
+      <button type="button" class="secondary compact" @click="copyDetails">
+        <AppIcon name="copy" :size="18" /> Kopyala
+      </button>
+    </section>
+
     <section v-if="lastResult" :class="['card', 'result-card', lastResult.result.savedCount > 0 ? 'success' : 'warn']" aria-live="polite">
       <header class="card-header">
         <div>
@@ -123,6 +138,7 @@ import { computed, ref } from 'vue';
 import AppIcon from '../components/AppIcon.vue';
 import RawTextPanel from '../components/RawTextPanel.vue';
 import { BANKS, FILE_ACCEPT, findBank } from '../core/parsers/index.js';
+import { describeError } from '../diagnostics.js';
 import { importStatement, loadStatement, notify, removeImport, state } from '../store.js';
 
 const fileInput = ref(null);
@@ -131,6 +147,7 @@ const bankCode = ref(null);
 const reading = ref(false);
 const busy = ref(false);
 const lastResult = ref(null);
+const readError = ref(null);
 
 const detection = computed(() => loaded.value?.detection);
 const banksForFile = computed(() => BANKS.filter((bank) => bank.format === loaded.value?.format));
@@ -152,6 +169,7 @@ async function onFileChange(event) {
   const file = event.target.files?.[0];
   if (!file) return;
   lastResult.value = null;
+  readError.value = null;
   loaded.value = null;
   bankCode.value = null;
   reading.value = true;
@@ -160,7 +178,7 @@ async function onFileChange(event) {
     loaded.value = statement;
     bankCode.value = statement.detection.code;
   } catch (error) {
-    notify(error?.message || 'Dosya okunamadı.', 'error');
+    readError.value = { fileName: file.name, message: error?.message || 'Dosya okunamadı.', details: describeError(error) };
     resetFile();
   } finally {
     reading.value = false;
@@ -205,6 +223,15 @@ async function undoLastImport() {
     notify(`Yükleme geri alındı, ${removed} işlem silindi.`, 'success');
   } catch (error) {
     notify(error?.message || 'Geri alınamadı.', 'error');
+  }
+}
+
+async function copyDetails() {
+  try {
+    await navigator.clipboard.writeText(readError.value.details);
+    notify('Teknik bilgi kopyalandı.', 'success');
+  } catch {
+    notify('Kopyalanamadı. Metni elle seçip kopyalayabilirsin.', 'error');
   }
 }
 
