@@ -32,13 +32,16 @@ export function parseStatementText(bankCode, text, fileName = '') {
 
 /**
  * Validates raw parser output and assigns duplicate detection keys.
+ * Zero amount rows (e.g. ING card lines that only spend bonus points) are not money
+ * movements; they are dropped and not counted at all.
  * @returns {{transactions: object[], parsedCount: number, invalidCount: number}}
  */
 export function prepareImport(rawTransactions) {
-  const valid = rawTransactions.map(normalizeTransaction).filter(Boolean);
+  const relevant = rawTransactions.filter((tx) => tx?.amount !== 0);
+  const valid = relevant.map(normalizeTransaction).filter(Boolean);
   return {
     transactions: assignKeys(valid),
-    parsedCount: rawTransactions.length,
-    invalidCount: rawTransactions.length - valid.length
+    parsedCount: relevant.length,
+    invalidCount: relevant.length - valid.length
   };
 }

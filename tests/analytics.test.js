@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   expenseBreakdown,
+  expenseCents,
   filterTransactions,
   groupSources,
   incomeSourceLabel,
@@ -8,6 +9,7 @@ import {
   monthKeys,
   monthTotals,
   monthlyRows,
+  periodPresets,
   sortTransactions,
   sourcesCaption
 } from '../src/core/analytics.js';
@@ -71,4 +73,41 @@ describe('analytics', () => {
     expect(sortTransactions(transactions, 'date', 'asc')[0].date).toBe('2026-04-10');
     expect(sortTransactions(transactions, 'description', 'asc')[0].description).toBe('ATM PARA CEKME');
   });
+
+  it('subtracts refunds from the spending of their category', () => {
+    const items = [
+      make('2026-06-01', 'HEPSIBURADA SIPARIS', 300),
+      make('2026-06-05', 'HEPSIBURADA IADE', 120, 'CREDIT'),
+      make('2026-06-06', 'MIGROS', 50),
+      make('2026-06-07', 'NETFLIX IADE', 99, 'CREDIT')
+    ];
+    expect(monthTotals(items, '2026-06')).toEqual({ debit: 131, credit: 0, net: -131 });
+    const { items: slices, total } = expenseBreakdown(items, '2026-06');
+    expect(total).toBe(230);
+    expect(slices.map((slice) => [slice.code, slice.total])).toEqual([['E_COMMERCE', 180], ['MARKET', 50]]);
+    expect(groupSources(items.filter(isExpense), (tx) => tx.subCategory, expenseCents)[0]).toMatchObject({ label: 'E_COMMERCE', total: 180, count: 2 });
+  });
+
+  it('never reports negative spending for a month', () => {
+    const items = [make('2026-07-01', 'HEPSIBURADA IADE', 500, 'CREDIT'), make('2026-07-02', 'MIGROS', 100)];
+    expect(monthTotals(items, '2026-07').debit).toBe(0);
+    expect(monthlyRows(items)[0].debit).toBe(0);
+  });
+
+  it('filters by amount range', () => {
+    const items = [make('2026-05-01', 'A', 10), make('2026-05-02', 'B', 50), make('2026-05-03', 'C', 500)];
+    expect(filterTransactions(items, { minAmount: '20', maxAmount: '' }).map((tx) => tx.description)).toEqual(['B', 'C']);
+    expect(filterTransactions(items, { minAmount: '', maxAmount: '50' }).map((tx) => tx.description)).toEqual(['A', 'B']);
+  });
+
+  it('builds quick period ranges', () => {
+    const presets = Object.fromEntries(periodPresets(new Date(2026, 0, 15)).map((p) => [p.id, [p.startDate, p.endDate]]));
+    expect(presets).toEqual({
+      'this-month': ['2026-01-01', '2026-01-31'],
+      'last-month': ['2025-12-01', '2025-12-31'],
+      'last-3-months': ['2025-11-01', '2026-01-31'],
+      'this-year': ['2026-01-01', '2026-12-31']
+    });
+  });
 });
+

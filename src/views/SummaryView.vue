@@ -141,6 +141,7 @@ import {
   expenseSourceLabel,
   groupSources,
   incomeSourceLabel,
+  expenseCents,
   isExpense,
   isIncome,
   monthKeys,
@@ -188,7 +189,7 @@ const cashflowRows = computed(() => monthlyRows(transactions.value).slice(0, CAS
 
 const monthItems = computed(() => transactions.value.filter((tx) => monthKey(tx.date) === selectedMonth.value));
 const incomeCaption = computed(() => sourcesCaption(groupSources(monthItems.value.filter(isIncome), incomeSourceLabel), 'Gelir kaydı yok'));
-const expenseCaption = computed(() => sourcesCaption(groupSources(monthItems.value.filter(isExpense), expenseSourceLabel), 'Gider kaydı yok'));
+const expenseCaption = computed(() => sourcesCaption(groupSources(monthItems.value.filter(isExpense), expenseSourceLabel, expenseCents), 'Gider kaydı yok'));
 
 const backingUp = ref(false);
 

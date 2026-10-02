@@ -2,15 +2,22 @@
 // All functions expect categorized transactions (see classifier.categorize).
 
 import { CHART_COLORS, categoryLabel } from './categories.js';
-import { monthKey } from './dates.js';
+import { currentMonthKey, monthKey, monthRange } from './dates.js';
 import { fromCents, toCents } from './money.js';
 
-const NON_EXPENSE_MAIN_CATEGORIES = ['TRANSFER', 'CASH', 'INVESTMENT'];
+const NON_EXPENSE_MAIN_CATEGORIES = ['INCOME', 'TRANSFER', 'CASH', 'INVESTMENT'];
 
 export const isSelfTransfer = (tx) => tx.subCategory === 'SELF_TRANSFER';
 
-/** Debits except transfers, cash withdrawals and investments. */
-export const isExpense = (tx) => tx.type === 'DEBIT' && !NON_EXPENSE_MAIN_CATEGORIES.includes(tx.mainCategory);
+/**
+ * Spending categories, i.e. everything except income, transfers, cash and investments.
+ * Credits in these categories are refunds (returned orders, gift balance used, friends
+ * paying back their share) and reduce the spending of their category.
+ */
+export const isExpense = (tx) => !NON_EXPENSE_MAIN_CATEGORIES.includes(tx.mainCategory);
+
+/** Spending of a transaction in cents: purchases count positive, refunds negative. */
+export const expenseCents = (tx) => (tx.type === 'CREDIT' ? -1 : 1) * toCents(tx.amount);
 
 export const isIncome = (tx) => tx.mainCategory === 'INCOME';
 
@@ -41,13 +48,15 @@ export function monthlyRows(transactions) {
     if (!expense && !income) continue;
     const month = monthKey(tx.date);
     const entry = totals.get(month) || { debit: 0, credit: 0 };
-    if (expense) entry.debit += toCents(tx.amount);
+    if (expense) entry.debit += expenseCents(tx);
     if (income) entry.credit += toCents(tx.amount);
     totals.set(month, entry);
   }
 
   return monthKeys(transactions).map((month) => {
-    const { debit = 0, credit = 0 } = totals.get(month) || {};
+    const { debit: spent = 0, credit = 0 } = totals.get(month) || {};
+    // A month where refunds exceed purchases has no spending rather than negative spending.
+    const debit = Math.max(spent, 0);
     const net = credit - debit;
     const max = Math.max(debit, credit, Math.abs(net), 1);
     return {
@@ -68,9 +77,10 @@ export function monthTotals(transactions, month) {
   let credit = 0;
   for (const tx of transactions) {
     if (monthKey(tx.date) !== month) continue;
-    if (isExpense(tx)) debit += toCents(tx.amount);
+    if (isExpense(tx)) debit += expenseCents(tx);
     if (isIncome(tx)) credit += toCents(tx.amount);
   }
+  debit = Math.max(debit, 0);
   return { debit: fromCents(debit), credit: fromCents(credit), net: fromCents(credit - debit) };
 }
 
@@ -81,16 +91,15 @@ export function monthTotals(transactions, month) {
  */
 export function expenseBreakdown(transactions, month, limit = 8) {
   const totals = new Map();
-  let grandTotal = 0;
   for (const tx of transactions) {
     if (!isExpense(tx) || monthKey(tx.date) !== month) continue;
     const code = tx.subCategory || 'UNKNOWN';
-    const cents = toCents(tx.amount);
-    totals.set(code, (totals.get(code) || 0) + cents);
-    grandTotal += cents;
+    totals.set(code, (totals.get(code) || 0) + expenseCents(tx));
   }
 
-  const sorted = [...totals.entries()].sort((a, b) => b[1] - a[1]);
+  // Categories fully offset by refunds are left out of the distribution.
+  const sorted = [...totals.entries()].filter(([, cents]) => cents > 0).sort((a, b) => b[1] - a[1]);
+  const grandTotal = sorted.reduce((sum, [, cents]) => sum + cents, 0);
   const head = sorted.slice(0, limit);
   const restTotal = sorted.slice(limit).reduce((sum, [, cents]) => sum + cents, 0);
 
@@ -130,14 +139,14 @@ export function incomeSourceLabel(tx) {
  * Groups transactions by bank and label, largest total first.
  * @returns {Array<{key: string, label: string, bankName: string, total: number, count: number, category: string}>}
  */
-export function groupSources(transactions, labelOf) {
+export function groupSources(transactions, labelOf, centsOf = (tx) => toCents(tx.amount)) {
   const groups = new Map();
   for (const tx of transactions) {
     const label = labelOf(tx);
     const bankName = tx.bankName || '-';
     const key = `${bankName}|${label}`;
     const group = groups.get(key) || { key, label, bankName, cents: 0, count: 0, category: tx.subCategory };
-    group.cents += toCents(tx.amount);
+    group.cents += centsOf(tx);
     group.count += 1;
     groups.set(key, group);
   }
@@ -160,7 +169,9 @@ export const EMPTY_FILTERS = Object.freeze({
   mainCategory: '',
   subCategory: '',
   startDate: '',
-  endDate: ''
+  endDate: '',
+  minAmount: '',
+  maxAmount: ''
 });
 
 export function hasActiveFilters(filters) {
@@ -177,7 +188,29 @@ export function filterTransactions(transactions, filters) {
     && (!filters.subCategory || tx.subCategory === filters.subCategory)
     && (!filters.startDate || tx.date >= filters.startDate)
     && (!filters.endDate || tx.date <= filters.endDate)
+    && (filters.minAmount === '' || filters.minAmount == null || tx.amount >= Number(filters.minAmount))
+    && (filters.maxAmount === '' || filters.maxAmount == null || tx.amount <= Number(filters.maxAmount))
   ));
+}
+
+/**
+ * Date ranges for the quick period buttons, relative to `now`.
+ * @returns {Array<{id: string, label: string, startDate: string, endDate: string}>}
+ */
+export function periodPresets(now = new Date()) {
+  const thisMonth = currentMonthKey(now);
+  const [year, month] = thisMonth.split('-').map(Number);
+  const shift = (offset) => {
+    const date = new Date(year, month - 1 + offset, 1);
+    return currentMonthKey(date);
+  };
+  const lastMonth = monthRange(shift(-1));
+  return [
+    { id: 'this-month', label: 'Bu ay', ...monthRange(thisMonth) },
+    { id: 'last-month', label: 'Geçen ay', ...lastMonth },
+    { id: 'last-3-months', label: 'Son 3 ay', start: monthRange(shift(-2)).start, end: monthRange(thisMonth).end },
+    { id: 'this-year', label: 'Bu yıl', start: `${year}-01-01`, end: `${year}-12-31` }
+  ].map(({ start, end, ...preset }) => ({ ...preset, startDate: start, endDate: end }));
 }
 
 const SORT_VALUES = {

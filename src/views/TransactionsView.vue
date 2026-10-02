@@ -30,6 +30,17 @@
       </button>
     </div>
 
+    <div class="period-chips" role="group" aria-label="Dönem">
+      <button
+        v-for="preset in presets"
+        :key="preset.id"
+        type="button"
+        :class="['chip', { active: activePreset === preset.id }]"
+        :aria-pressed="activePreset === preset.id"
+        @click="togglePreset(preset)"
+      >{{ preset.label }}</button>
+    </div>
+
     <section v-if="showFilters" class="card filter-panel">
       <label v-if="segment === 'all'">
         Tip
@@ -68,6 +79,16 @@
         <label>
           Bitiş
           <input v-model="filters.endDate" type="date" />
+        </label>
+      </div>
+      <div class="date-range">
+        <label>
+          En az tutar (₺)
+          <input v-model="filters.minAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0" />
+        </label>
+        <label>
+          En çok tutar (₺)
+          <input v-model="filters.maxAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="Sınırsız" />
         </label>
       </div>
       <label>
@@ -123,8 +144,10 @@ import {
   filterTransactions,
   groupSources,
   incomeSourceLabel,
+  expenseCents,
   isExpense,
   isIncome,
+  periodPresets,
   sortTransactions,
   uniqueSorted
 } from '../core/analytics.js';
@@ -192,10 +215,9 @@ const totals = computed(() => {
 
 const supportsSources = computed(() => segment.value === 'expense' || segment.value === 'income');
 
-const sources = computed(() => groupSources(
-  filtered.value,
-  segment.value === 'income' ? incomeSourceLabel : expenseSourceLabel
-));
+const sources = computed(() => (segment.value === 'income'
+  ? groupSources(filtered.value, incomeSourceLabel)
+  : groupSources(filtered.value, expenseSourceLabel, expenseCents)));
 
 const bankOptions = computed(() => uniqueSorted(base.value.map((tx) => tx.bankName)));
 const byLabel = (codes) => [...new Set(codes)].sort((a, b) => categoryLabel(a).localeCompare(categoryLabel(b), 'tr'));
@@ -211,6 +233,18 @@ const emptyText = computed(() => EMPTY_TEXTS[segment.value]);
 function setSegment(value) {
   segment.value = value;
   mode.value = 'list';
+}
+
+const presets = periodPresets();
+
+const activePreset = computed(() => presets.find((preset) => (
+  filters.startDate === preset.startDate && filters.endDate === preset.endDate
+))?.id || null);
+
+function togglePreset(preset) {
+  const active = activePreset.value === preset.id;
+  filters.startDate = active ? '' : preset.startDate;
+  filters.endDate = active ? '' : preset.endDate;
 }
 
 function clearFilters() {
