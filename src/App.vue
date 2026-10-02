@@ -1,7 +1,7 @@
 <template>
   <div class="app">
     <div v-if="!state.ready" class="splash" aria-busy="true">
-      <span class="empty-visual">AY</span>
+      <AppLogo :size="72" class="splash-logo" />
     </div>
 
     <div v-else-if="state.loadError" class="fatal">
@@ -20,7 +20,7 @@
     <template v-else>
       <header class="app-header">
         <div>
-          <p class="eyebrow brand">aybashim</p>
+          <p class="eyebrow brand"><AppLogo :size="18" />aybashim</p>
           <h1>{{ currentTab.title }}</h1>
         </div>
         <button
@@ -63,6 +63,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, watch } from 'vue';
 import AppIcon from './components/AppIcon.vue';
+import AppLogo from './components/AppLogo.vue';
 import ToastMessage from './components/ToastMessage.vue';
 import UpdatePrompt from './components/UpdatePrompt.vue';
 import { state } from './store.js';

@@ -5,7 +5,7 @@
     </div>
 
     <div class="onboarding-body">
-      <p class="eyebrow brand">aybashim</p>
+      <p class="eyebrow brand"><AppLogo :size="28" />aybashim</p>
       <h1>Ay sonunu beklemeden akışı gör.</h1>
       <p class="lead">Ekstrelerini yükle, gelir ve giderini sakin bir panelde izle.</p>
 
@@ -36,6 +36,7 @@
 import { ref } from 'vue';
 import heroImage from '../assets/finance-hero.webp';
 import AppIcon from '../components/AppIcon.vue';
+import AppLogo from '../components/AppLogo.vue';
 import { completeOnboarding, notify, requestPersistentStorage, restoreFromFile } from '../store.js';
 
 const fullName = ref('');

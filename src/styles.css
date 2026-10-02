@@ -356,8 +356,22 @@ label {
 }
 
 .eyebrow.brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   text-transform: none;
   letter-spacing: 0.02em;
+}
+
+.app-logo {
+  display: block;
+  flex: none;
+  border-radius: 22%;
+}
+
+.splash-logo {
+  border-radius: 24%;
+  box-shadow: var(--shadow-soft);
 }
 
 /* File names are shown as they are, not upper-cased like other eyebrows. */
@@ -448,14 +462,7 @@ label {
 }
 
 .empty-visual {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
   border-radius: 18px;
-  background: linear-gradient(135deg, var(--primary-soft), var(--pastel-blue));
-  color: var(--primary);
-  font-weight: 900;
 }
 
 /* Money */
@@ -1085,6 +1092,47 @@ label {
   color: var(--text-muted);
   font-size: 12px;
   font-weight: 500;
+}
+
+.file-drop.loaded {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--line));
+}
+
+.spinner.large {
+  width: 28px;
+  height: 28px;
+  border-width: 3px;
+  color: var(--primary);
+}
+
+.detect-note {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.detect-note p {
+  margin: 0;
+}
+
+.detect-note.found {
+  background: var(--pastel-green);
+  color: var(--ink);
+}
+
+.detect-note.found .app-icon {
+  color: var(--credit);
+}
+
+.detect-note.unsure {
+  background: var(--warn-soft);
+  color: var(--warn-ink);
 }
 
 .file-name {
