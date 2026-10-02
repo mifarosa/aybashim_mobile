@@ -356,8 +356,22 @@ label {
 }
 
 .eyebrow.brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   text-transform: none;
   letter-spacing: 0.02em;
+}
+
+.app-logo {
+  display: block;
+  flex: none;
+  border-radius: 22%;
+}
+
+.splash-logo {
+  border-radius: 24%;
+  box-shadow: var(--shadow-soft);
 }
 
 /* File names are shown as they are, not upper-cased like other eyebrows. */
@@ -448,14 +462,7 @@ label {
 }
 
 .empty-visual {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
   border-radius: 18px;
-  background: linear-gradient(135deg, var(--primary-soft), var(--pastel-blue));
-  color: var(--primary);
-  font-weight: 900;
 }
 
 /* Money */
