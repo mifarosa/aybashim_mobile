@@ -120,7 +120,10 @@
       <ul v-if="state.imports.length > 0" class="import-list">
         <li v-for="item in state.imports" :key="item.id">
           <span class="import-text">
-            <strong>{{ item.fileName || 'Adsız dosya' }}</strong>
+            <strong>
+              {{ item.fileName || 'Adsız dosya' }}
+              <span v-if="isOutdatedImport(item)" class="badge-warn">Yeniden yükle</span>
+            </strong>
             <small>{{ bankLabel(item.bankCode) }} · {{ formatTimestamp(item.importedAt) }} · {{ item.savedCount }} işlem</small>
           </span>
           <button type="button" class="icon-button danger" :aria-label="`${item.fileName} yüklemesini sil`" @click="remove(item)">
@@ -137,7 +140,7 @@
 import { computed, ref } from 'vue';
 import AppIcon from '../components/AppIcon.vue';
 import RawTextPanel from '../components/RawTextPanel.vue';
-import { BANKS, FILE_ACCEPT, findBank } from '../core/parsers/index.js';
+import { BANKS, FILE_ACCEPT, findBank, isOutdatedImport } from '../core/parsers/index.js';
 import { describeError } from '../diagnostics.js';
 import { importStatement, loadStatement, notify, removeImport, state } from '../store.js';
 

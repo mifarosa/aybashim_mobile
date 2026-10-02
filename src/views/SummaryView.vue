@@ -1,5 +1,19 @@
 <template>
   <div class="view">
+    <section v-if="outdatedImports.length > 0" class="notice notice-warn" role="alert">
+      <AppIcon name="alert" />
+      <div>
+        <strong>Bazı tutarlar hatalı olabilir</strong>
+        <p>
+          {{ outdatedImports.length }} ING hesap ekstresi, sonradan düzeltilen eski bir okuyucuyla yüklenmiş. Bu kayıtları
+          silip aynı dosyaları yeniden yükle; gelir ve gider ancak o zaman doğru görünür.
+        </p>
+        <button type="button" class="secondary compact" :disabled="cleaning" @click="cleanOutdated">
+          <AppIcon name="trash" :size="18" /> Eski kayıtları sil
+        </button>
+      </div>
+    </section>
+
     <section v-if="backupDue" class="notice notice-warn">
       <AppIcon name="shield" />
       <div>
@@ -150,7 +164,17 @@ import {
   sourcesCaption
 } from '../core/analytics.js';
 import { currentMonthKey, formatMonth, monthKey, monthRange } from '../core/dates.js';
-import { backupDue, downloadBackup, notify, openTransactions, selfTransfers, state, transactions } from '../store.js';
+import {
+  backupDue,
+  downloadBackup,
+  notify,
+  openTransactions,
+  outdatedImports,
+  removeOutdatedImports,
+  selfTransfers,
+  state,
+  transactions
+} from '../store.js';
 
 const CASHFLOW_MONTHS = 6;
 
@@ -192,6 +216,22 @@ const incomeCaption = computed(() => sourcesCaption(groupSources(monthItems.valu
 const expenseCaption = computed(() => sourcesCaption(groupSources(monthItems.value.filter(isExpense), expenseSourceLabel, expenseCents), 'Gider kaydı yok'));
 
 const backingUp = ref(false);
+const cleaning = ref(false);
+
+async function cleanOutdated() {
+  const names = outdatedImports.value.map((item) => item.fileName).join(', ');
+  if (!window.confirm(`Şu yüklemeler ve işlemleri silinecek: ${names}. Sonra aynı dosyaları yeniden yüklemen gerekiyor. Devam edilsin mi?`)) return;
+  cleaning.value = true;
+  try {
+    const removed = await removeOutdatedImports();
+    notify(`${removed} işlem silindi. Şimdi ING hesap ekstrelerini yeniden yükle.`, 'success');
+    state.tab = 'upload';
+  } catch (error) {
+    notify(error?.message || 'Silinemedi.', 'error');
+  } finally {
+    cleaning.value = false;
+  }
+}
 
 async function backup() {
   backingUp.value = true;

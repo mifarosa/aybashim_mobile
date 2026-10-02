@@ -13,7 +13,7 @@ const SETTINGS_KEY = 'app';
  * Stores a parsed statement. Rows whose key already exists are counted as duplicates.
  * Nothing is recorded in the import history when every row was a duplicate.
  */
-export async function saveImport(db, { bankCode, fileName, transactions, parsedCount, invalidCount = 0 }) {
+export async function saveImport(db, { bankCode, fileName, transactions, parsedCount, invalidCount = 0, parserVersion = 1 }) {
   return db.transaction('rw', db.transactions, db.imports, async () => {
     const keys = transactions.map((tx) => tx.key);
     const existing = new Set(await db.transactions.where('key').anyOf(keys).primaryKeys());
@@ -36,7 +36,8 @@ export async function saveImport(db, { bankCode, fileName, transactions, parsedC
       parsedCount,
       savedCount: fresh.length,
       duplicateCount: result.duplicateCount,
-      invalidCount
+      invalidCount,
+      parserVersion
     });
     await db.transactions.bulkAdd(fresh.map((tx) => ({ ...tx, importId, importedAt, updatedAt: now })));
     return { ...result, importId };
@@ -49,6 +50,15 @@ export function listTransactions(db) {
 
 export async function listImports(db) {
   return (await db.imports.orderBy('importedAt').toArray()).reverse();
+}
+
+/** Removes several imports with their transactions. Returns the removed row count. */
+export async function deleteImports(db, importIds) {
+  return db.transaction('rw', db.transactions, db.imports, async () => {
+    const removed = await db.transactions.where('importId').anyOf(importIds).delete();
+    await db.imports.bulkDelete(importIds);
+    return removed;
+  });
 }
 
 /** Removes an import together with every transaction it added. Returns the removed row count. */

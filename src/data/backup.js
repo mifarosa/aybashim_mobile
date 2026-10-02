@@ -70,7 +70,8 @@ export function parseBackup(data) {
       parsedCount: Number(item.parsedCount) || 0,
       savedCount: Number(item.savedCount) || 0,
       duplicateCount: Number(item.duplicateCount) || 0,
-      invalidCount: Number(item.invalidCount) || 0
+      invalidCount: Number(item.invalidCount) || 0,
+      parserVersion: Number(item.parserVersion) || 1
     }));
 
   const settings = {
