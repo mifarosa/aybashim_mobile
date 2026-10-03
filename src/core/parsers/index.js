@@ -12,6 +12,24 @@ export const BANKS = [
   { code: 'GARANTI', label: 'Garanti BBVA', detail: 'Hesap ekstresi · XLS', mark: 'GB', format: 'xls' }
 ];
 
+/**
+ * Version of each bank's parser. Bump it when a fix changes what an existing statement
+ * parses into; imports made with an older version are flagged so the user re-imports them.
+ * ING_ACCOUNT 2: amounts are taken from the end of the row (0.3.0).
+ */
+export const PARSER_VERSIONS = {
+  ING_ACCOUNT: 2,
+  ING_CREDIT: 1,
+  HADI: 1,
+  GARANTI: 1
+};
+
+/** True when an import was read by an older parser whose results may be wrong. */
+export function isOutdatedImport(item) {
+  const current = PARSER_VERSIONS[item?.bankCode];
+  return current != null && (Number(item.parserVersion) || 1) < current;
+}
+
 export const FILE_ACCEPT = 'application/pdf,.pdf,application/vnd.ms-excel,.xls';
 
 const TEXT_PARSERS = {

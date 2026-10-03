@@ -2,8 +2,8 @@ import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { createDatabase } from '../src/data/db.js';
 import { createBackup, parseBackup, restoreBackup } from '../src/data/backup.js';
-import { clearAllData, deleteImport, listImports, listTransactions, loadSettings, saveImport, saveSettings } from '../src/data/repository.js';
-import { prepareImport } from '../src/core/parsers/index.js';
+import { clearAllData, deleteImport, deleteImports, listImports, listTransactions, loadSettings, saveImport, saveSettings } from '../src/data/repository.js';
+import { PARSER_VERSIONS, isOutdatedImport, prepareImport } from '../src/core/parsers/index.js';
 
 let db;
 let counter = 0;
@@ -46,6 +46,31 @@ describe('repository', () => {
     expect(await listImports(db)).toHaveLength(1);
   });
 
+  it('records the parser version and flags imports read by an older parser', async () => {
+    const current = await saveImport(db, { ...statement([['2026-05-01', 'A', 1]]), bankCode: 'ING_ACCOUNT', parserVersion: PARSER_VERSIONS.ING_ACCOUNT });
+    const legacy = await saveImport(db, { ...statement([['2026-05-02', 'B', 2]]), bankCode: 'ING_ACCOUNT' });
+    await saveImport(db, statement([['2026-05-03', 'C', 3]]));
+
+    const imports = await listImports(db);
+    const byId = Object.fromEntries(imports.map((item) => [item.id, item]));
+    expect(isOutdatedImport(byId[current.importId])).toBe(false);
+    expect(isOutdatedImport(byId[legacy.importId])).toBe(true);
+    expect(imports.filter(isOutdatedImport)).toHaveLength(1);
+    // Imports saved before versions existed have no parserVersion at all.
+    expect(isOutdatedImport({ bankCode: 'ING_ACCOUNT' })).toBe(true);
+    expect(isOutdatedImport({ bankCode: 'GARANTI' })).toBe(false);
+  });
+
+  it('deletes several imports with their transactions', async () => {
+    const first = await saveImport(db, statement([['2026-05-01', 'A', 1], ['2026-05-02', 'B', 2]]));
+    const second = await saveImport(db, statement([['2026-05-03', 'C', 3]]));
+    await saveImport(db, statement([['2026-05-04', 'D', 4]]));
+
+    expect(await deleteImports(db, [first.importId, second.importId])).toBe(3);
+    expect((await listTransactions(db)).map((tx) => tx.description)).toEqual(['D']);
+    expect(await listImports(db)).toHaveLength(1);
+  });
+
   it('merges settings with defaults', async () => {
     expect(await loadSettings(db)).toMatchObject({ fullName: '', hideAmounts: true, onboarded: false });
     await saveSettings(db, { fullName: 'Ayşe Yılmaz' });
@@ -83,6 +108,13 @@ describe('backup', () => {
     } finally {
       await target.delete();
     }
+  });
+
+  it('keeps the parser version of imports in backups', async () => {
+    await saveImport(db, { ...statement([['2026-05-01', 'A', 1]]), bankCode: 'ING_ACCOUNT', parserVersion: 2 });
+    const backup = parseBackup(JSON.parse(JSON.stringify(await createBackup(db))));
+    expect(backup.imports[0].parserVersion).toBe(2);
+    expect(parseBackup({ format: 'aybashim-backup', version: 1, transactions: [], imports: [{ id: 1, bankCode: 'ING_ACCOUNT' }] }).imports[0].parserVersion).toBe(1);
   });
 
   it('merges without duplicating existing rows and remaps import ids', async () => {

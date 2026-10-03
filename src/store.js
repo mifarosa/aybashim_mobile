@@ -4,6 +4,7 @@ import { computed, reactive, shallowRef } from 'vue';
 import { EMPTY_FILTERS, isSelfTransfer } from './core/analytics.js';
 import { categorize } from './core/classifier.js';
 import { loadStatement, parseLoadedStatement } from './core/statementReader.js';
+import { PARSER_VERSIONS, isOutdatedImport } from './core/parsers/index.js';
 import { countOtherBankMatches } from './core/transactions.js';
 import { backupFileName, createBackup, parseBackup, restoreBackup } from './data/backup.js';
 import { createDatabase } from './data/db.js';
@@ -11,6 +12,7 @@ import {
   DEFAULT_SETTINGS,
   clearAllData,
   deleteImport,
+  deleteImports,
   listImports,
   listTransactions,
   loadSettings,
@@ -125,10 +127,20 @@ export async function importStatement(loaded, bankCode) {
     fileName: loaded.fileName,
     transactions: parsed.transactions,
     parsedCount: parsed.parsedCount,
-    invalidCount: parsed.invalidCount
+    invalidCount: parsed.invalidCount,
+    parserVersion: PARSER_VERSIONS[bankCode]
   });
   await refreshData();
   return { ...result, otherBankMatches };
+}
+
+/** Imports read by an older, since fixed parser; their amounts may be wrong. */
+export const outdatedImports = computed(() => state.imports.filter(isOutdatedImport));
+
+export async function removeOutdatedImports() {
+  const removed = await deleteImports(db, outdatedImports.value.map((item) => item.id));
+  await refreshData();
+  return removed;
 }
 
 export async function removeImport(importId) {
