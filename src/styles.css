@@ -1395,6 +1395,36 @@ label {
   color: var(--danger);
 }
 
+/* Support link, styled like the other mifarosa apps. */
+.coffee {
+  margin: 14px 0 4px;
+  text-align: center;
+}
+
+.coffee p {
+  margin: 0 0 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.coffee-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: #ffdd00;
+  color: #14181e;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.coffee-pill:active {
+  transform: scale(0.97);
+}
+
 .about {
   padding: 4px 8px;
   color: var(--text-muted);
