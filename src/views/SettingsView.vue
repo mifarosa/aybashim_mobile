@@ -104,6 +104,8 @@
       </button>
     </section>
 
+    <CoffeeButton />
+
     <p class="about">
       aybashim {{ version }} · Veriler yalnızca bu cihazda saklanır, hiçbir sunucuya gönderilmez.
     </p>
@@ -113,6 +115,7 @@
 <script setup>
 import { computed, onActivated, reactive, ref, watch } from 'vue';
 import AppIcon from '../components/AppIcon.vue';
+import CoffeeButton from '../components/CoffeeButton.vue';
 import { APP_BUILD, APP_VERSION } from '../diagnostics.js';
 import {
   downloadBackup,

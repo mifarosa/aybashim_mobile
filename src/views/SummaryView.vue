@@ -140,6 +140,8 @@
           <strong>{{ selfTransfers.length }}</strong>
         </button>
       </section>
+
+      <CoffeeButton />
     </template>
   </div>
 </template>
@@ -147,6 +149,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import AppIcon from '../components/AppIcon.vue';
+import CoffeeButton from '../components/CoffeeButton.vue';
 import DonutChart from '../components/DonutChart.vue';
 import EmptyState from '../components/EmptyState.vue';
 import MoneyAmount from '../components/MoneyAmount.vue';
